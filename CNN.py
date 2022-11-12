@@ -15,9 +15,9 @@ from feature_extractor import ImageDataset
 
 parser = argparse.ArgumentParser(description='PyTorch ResNet feature extracting')
 parser.add_argument('--no-cuda', action='store_true', default=False,
-					help='disables CUDA training')
+                    help='disables CUDA training')
 parser.add_argument('--test-batch-size', type=int, default=200, metavar='N',
-					help='input batch size for testing (default: 200)')
+                    help='input batch size for testing (default: 200)')
 
 args = parser.parse_args()
 
@@ -27,38 +27,38 @@ device = torch.device("cuda" if use_cuda else "cpu")
 kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
 testset = ImageDataset(
-	folder='/content/croped_framed/1/',
-	transforms=None
+    folder='/content/croped_framed/1/',
+    transforms=None
 )
 
 test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
 def rep(model, device, test_loader):
-	model.eval()
+    model.eval()
 
-	#feature list
-	features = []
+    #feature list
+    features = []
 
-	for data in test_loader:
-		data = data.to(device)
-		X = Variable(data)
+    for data in test_loader:
+        data = data.to(device)
+        X = Variable(data)
 
-		feat = model(X).reshape(X.shape[0], 2048)
-		features.extend(feat.cpu().detach().numpy())
+        feat = model(X).reshape(X.shape[0], 2048)
+        features.extend(feat.cpu().detach().numpy())
 
-	features = np.array(features)
+    features = np.array(features)
 
-	return features;
+    return features;
 
 def main():
-	model = resnet101(weights=ResNet101_Weights.DEFAULT)
-	model = model.to(device)
+    model = resnet101(weights=ResNet101_Weights.DEFAULT)
+    model = model.to(device)
 
-	#get backbone of CNN
-	backbone = FeatureExtractor(model)
-	backbone = backbone.to(device)
+    #get backbone of CNN
+    backbone = FeatureExtractor(model)
+    backbone = backbone.to(device)
 
-	features = rep(backbone, device, testset)
+    features = rep(backbone, device, testset)
 
 if __name__ == '__main__':
-	main()
+    main()
