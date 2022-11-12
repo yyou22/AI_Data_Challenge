@@ -2,7 +2,7 @@ import os
 from PIL import Image
 
 # create a directory for cropped images
-croped_dir= "./croped_framed"
+croped_dir= "./croped_framed/"
 if not os.path.exists(croped_dir):
     os.makedirs(croped_dir)
 
@@ -10,7 +10,7 @@ path = "/content/frames/video_frames/"
 images_path = os.listdir(path)
 
 
-for img_path in images_path:
+for img_path in images_path[10:]:
     # take the image
     sample_image_path = path + img_path
     img = Image.open(sample_image_path)
