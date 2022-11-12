@@ -12,6 +12,9 @@ from feature_extractor import FeatureExtractor
 import numpy as np
 
 parser = argparse.ArgumentParser(description='PyTorch ResNet feature extracting')
+parser.add_argument('--no-cuda', action='store_true', default=False,
+                    help='disables CUDA training')
+
 args = parser.parse_args()
 
 # settings
