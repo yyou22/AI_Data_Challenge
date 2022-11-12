@@ -23,6 +23,12 @@ class ImageDataset(object):
         self.files = glob.glob(os.path.join(folder, '*.jpg'))
     
     def __getitem__(self, idx):
-        ...
+        img_path = os.path.join(self.folder, "frame_" + str(idx) + ".jpg")
+        img = Image.open(img_path)
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        return im
     def __len__(self):
         return len(self.files)
