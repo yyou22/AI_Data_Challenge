@@ -11,6 +11,9 @@ from torchvision.models import resnet101, ResNet101_Weights
 from feature_extractor import FeatureExtractor
 import numpy as np
 
+parser = argparse.ArgumentParser(description='PyTorch ResNet feature extracting')
+args = parser.parse_args()
+
 # settings
 use_cuda = not args.no_cuda and torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
