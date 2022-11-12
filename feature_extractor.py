@@ -1,3 +1,5 @@
+import os
+import glob
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -14,3 +16,13 @@ class FeatureExtractor(nn.Module):
 
     def forward(self, x):
         return self.features(x)
+
+class ImageDataset(object):
+    def __init__(self, folder, transforms=None):
+        self.folder = folder
+        self.files = glob.glob(os.path.join(folder, '*.jpg'))
+    
+    def __getitem__(self, idx):
+        ...
+    def __len__(self):
+        return len(self.files)
