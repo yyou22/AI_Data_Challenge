@@ -6,12 +6,19 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 import torch.optim as optim
+from torch.autograd import Variable
 from torchvision import datasets, transforms
 from torchvision.models import resnet101, ResNet101_Weights
 import numpy as np
+import pandas as pd
 
 from feature_extractor import FeatureExtractor
 from feature_extractor import ImageDataset
+
+from sklearn.cluster import KMeans
+from IPython.display import Image
+
+from collections import Counter
 
 parser = argparse.ArgumentParser(description='PyTorch ResNet feature extracting')
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -26,29 +33,55 @@ use_cuda = not args.no_cuda and torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
+# set up data loader
+transform_test = transforms.Compose([
+    transforms.Resize((244, 244)),
+    transforms.ToTensor(),
+])
+
 testset = ImageDataset(
-    folder='/content/croped_framed/1/',
-    transforms=None
+    folder='/content/croped_framed/croped_framed/1/',
+    transforms=transform_test
 )
 
-test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+test_loader = torch.utils.data.DataLoader(testset, batch_size=200, shuffle=False, **kwargs)
+
+def k_means_(img_features):
+    k = 2
+    clusters = KMeans(k, random_state = 40)
+    clusters.fit(img_features)
+    knn_labels = clusters.labels_
+
+    keys_ = Counter(knn_labels).keys()
+    val_ = Counter(knn_labels).values()
+
+    print(keys_)
+    print(val_)
+
+    return knn_labels
 
 def rep(model, device, test_loader):
     model.eval()
 
     #feature list
     features = []
+    imgIDs = []
 
-    for data in test_loader:
+    for data, imgID in test_loader:
         data = data.to(device)
+        imgID = imgID.to(device)
+
         X = Variable(data)
+        y = Variable(imgID)
 
         feat = model(X).reshape(X.shape[0], 2048)
         features.extend(feat.cpu().detach().numpy())
+        imgIDs.extend(y.data.cpu().detach().numpy())
 
     features = np.array(features)
+    imgIDs = np.array(imgIDs)
 
-    return features;
+    return features, imgIDs;
 
 def main():
     model = resnet101(weights=ResNet101_Weights.DEFAULT)
@@ -58,7 +91,15 @@ def main():
     backbone = FeatureExtractor(model)
     backbone = backbone.to(device)
 
-    features = rep(backbone, device, testset)
+    features,imgIDs = rep(backbone, device, test_loader)
+
+    knn_labels = k_means_(features)
+
+    image_cluster = pd.DataFrame(imgIDs,columns=['image'])
+
+    image_cluster["knn"] = knn_labels
+
+    image_cluster.to_csv("output1.csv", index=False)
 
 if __name__ == '__main__':
     main()

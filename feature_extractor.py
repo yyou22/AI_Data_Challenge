@@ -24,15 +24,19 @@ class FeatureExtractor(nn.Module):
 class ImageDataset(object):
     def __init__(self, folder, transforms=None):
         self.folder = folder
+        self.transforms = transforms
         self.files = glob.glob(os.path.join(folder, '*.jpg'))
     
     def __getitem__(self, idx):
-        img_path = os.path.join(self.folder, "frame_" + str(idx) + ".jpg")
+        img_path = os.path.join(self.folder, "frame_" + str(idx + 1) + ".jpg")
         img = Image.open(img_path)
 
-        if self.transform is not None:
-            img = self.transform(img)
+        imageId = idx + 1
 
-        return im
+        if self.transforms is not None:
+            img = self.transforms(img)
+
+        return img, imageId
+
     def __len__(self):
         return len(self.files)
