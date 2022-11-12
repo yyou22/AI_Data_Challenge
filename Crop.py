@@ -1,19 +1,19 @@
 import os
 from PIL import Image
-
-
+import cv2
+import numpy as np
 
 path = "/content/frames/video_frames/"
 images_path = os.listdir(path)
 
 # create a directory for cropped images
-croped_dir= "../croped_framed/"
+croped_dir= "./croped_framed/"
 for i in range(1,7):
     if not os.path.exists(croped_dir + str(i) + "/"):
         os.makedirs(croped_dir + str(i) + "/")
 
 
-for img_name in images_path:
+for img_name in images_path[:10]:
     # take the image
     sample_image_path = path + img_name
     img = Image.open(sample_image_path)
@@ -38,4 +38,29 @@ for img_name in images_path:
 
         # Crop, show, and save image
         cropped_img = img.crop(area)
-        cropped_img.save(croped_dir + str(r+1) + "/"  + img_name)
+
+        # crop unuseful area in ROI 2 and 5
+        img_padding = np.array(cropped_img)
+
+        if r == 1:
+            pts = np.array([[0,0],[0,35],[193,88],[193,0]])
+            pts = np.array([pts])
+            mask = np.zeros(img_padding.shape[:2], np.uint8)
+
+            cv2.polylines(mask, pts, 1, 255)    
+            cv2.fillPoly(mask, pts, 255)   
+            cropped_img_ = cv2.bitwise_and(img_padding, img_padding, mask=mask)
+            cv2.imwrite(croped_dir + str(r+1) + "/"  + img_name, cropped_img_)
+
+        elif r == 4:
+            pts = np.array([[0,50],[0,75],[81,75],[81,50]])
+            pts = np.array([pts])
+            mask = np.zeros(img_padding.shape[:2], np.uint8)
+
+            cv2.polylines(mask, pts, 1, 255)    
+            cv2.fillPoly(mask, pts, 255)   
+            cropped_img_ = cv2.bitwise_and(img_padding, img_padding, mask=mask)
+            cv2.imwrite(croped_dir + str(r+1) + "/"  + img_name, cropped_img_)
+
+        else:
+            cropped_img.save(croped_dir + str(r+1) + "/"  + img_name)
