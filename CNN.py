@@ -57,7 +57,8 @@ def main():
 	#get backbone of CNN
 	backbone = FeatureExtractor(model)
 	backbone = backbone.to(device)
-
+    
+    features = rep(backbone, device, testset)
 
 if __name__ == '__main__':
 	main()
