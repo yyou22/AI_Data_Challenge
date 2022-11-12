@@ -13,7 +13,7 @@ for i in range(1,7):
         os.makedirs(croped_dir + str(i) + "/")
 
 
-for img_name in images_path[:10]:
+for img_name in images_path:
     # take the image
     sample_image_path = path + img_name
     img = Image.open(sample_image_path)
