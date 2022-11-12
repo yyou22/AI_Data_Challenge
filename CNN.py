@@ -26,9 +26,9 @@ use_cuda = not args.no_cuda and torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
 
-testset = Image_Test(
-	root_dir='/content/croped_framed/1/',
-	transform=none
+testset = ImageDataset(
+	folder='/content/croped_framed/1/',
+	transforms=None
 )
 
 test_loader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, **kwargs)
