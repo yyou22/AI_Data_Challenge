@@ -47,15 +47,16 @@ class ImageDataset_tar(object):
         self.transforms = transforms
         self.files = glob.glob(os.path.join(folder, '*.jpg'))
 
-        self.csv_file_name = 'ROI1.csv'
+        self.csv_file_name = 'ROI5.csv'
 
         csv_file_path = os.path.join(
             self.folder, self.csv_file_name)
 
-        self.csv_data = pd.read_csv(csv_file_path, sep=';', usecols=["Filename", "ClassId"])
+        self.csv_data = pd.read_csv(csv_file_path, sep=',')
     
     def __getitem__(self, idx):
-        img_path = os.path.join(self.folder, "frame_" + str(idx + 1) + ".jpg")
+
+        img_path = os.path.join(self.folder, self.csv_data.iloc[idx, 0])
         img = Image.open(img_path)
 
         imageId = idx + 1
@@ -65,7 +66,7 @@ class ImageDataset_tar(object):
 
         classId = self.csv_data.iloc[idx, 1]
 
-        return img, target, imageId
+        return img, classId, imageId
 
     def __len__(self):
         return len(self.files)

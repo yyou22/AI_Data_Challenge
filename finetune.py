@@ -9,20 +9,16 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torchvision.models import resnet101, ResNet101_Weights
 
-from GTSRB import GTSRB_Test
-from models.wideresnet import *
-from models.resnet import *
-from trades import trades_loss
-
 from feature_extractor import FeatureExtractor
 from feature_extractor import ImageDataset
+from feature_extractor import ImageDataset_tar
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR TRADES Adversarial Training')
 parser.add_argument('--batch-size', type=int, default=128, metavar='N',
                     help='input batch size for training (default: 128)')
 parser.add_argument('--test-batch-size', type=int, default=128, metavar='N',
                     help='input batch size for testing (default: 128)')
-parser.add_argument('--epochs', type=int, default=20, metavar='N',
+parser.add_argument('--epochs', type=int, default=40, metavar='N',
                     help='number of epochs to train')
 parser.add_argument('--weight-decay', '--wd', default=2e-4,
                     type=float, metavar='W')
@@ -42,6 +38,9 @@ parser.add_argument('--model-dir', default='./model-finetune-ResNet',
                     help='directory of model for saving checkpoint')
 parser.add_argument('--save-freq', '-s', default=1, type=int, metavar='N',
                     help='save frequency')
+parser.add_argument('--model-path',
+                    default='./model-check/model_roi6.pt',
+                    help='model for white-box attack evaluation')#here
 
 args = parser.parse_args()
 
@@ -60,19 +59,24 @@ transform_test = transforms.Compose([
     transforms.ToTensor(),
 ])
 
-testset = ImageDataset_tar(
-    folder='/content/ROI1/',
+trainset = ImageDataset_tar(
+    folder='/content/ROI6/ROI6/', #here
+    transforms=transform_test
+)
+
+testset = ImageDataset(
+    folder='/content/croped_framed/croped_framed/6/', #here
+    #folder='/content/croped_framed/2/2/',
     transforms=transform_test
 )
 
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, **kwargs)
+test_loader = torch.utils.data.DataLoader(testset, batch_size=200, shuffle=False, **kwargs)
 
 def train(args, model, device, train_loader, optimizer, epoch):
-    #mlflow
-    start_time = last_logging = time.time()
 
     model.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
+    for batch_idx, (data, target, imgID) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
 
@@ -93,7 +97,7 @@ def eval_train(model, device, train_loader):
     train_loss = 0
     correct = 0
     with torch.no_grad():
-        for data, target in train_loader:
+        for data, target, imgID in train_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
             train_loss += F.cross_entropy(output, target, size_average=False).item()
@@ -110,20 +114,15 @@ def eval_train(model, device, train_loader):
 def eval_test(model, device, test_loader):
     model.eval()
     test_loss = 0
-    correct = 0
+    has_person = 0
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
-            test_loss += F.cross_entropy(output, target, size_average=False).item()
             pred = output.max(1, keepdim=True)[1]
-            correct += pred.eq(target.view_as(pred)).sum().item()
-    test_loss /= len(test_loader.dataset)
-    print('Test: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
-    test_accuracy = correct / len(test_loader.dataset)
-    return test_loss, test_accuracy
+            has_person += pred.eq(1).sum().item()
+    print(has_person)
+    return
 
 
 def adjust_learning_rate(optimizer, epoch):
@@ -138,6 +137,12 @@ def adjust_learning_rate(optimizer, epoch):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
+def test():
+    model = resnet101()
+    model.fc = nn.Linear(2048, 2)
+    model = model.to(device)
+    model.load_state_dict(torch.load(args.model_path))
+    eval_test(model, device, test_loader)
 
 def main():
     model = resnet101(weights=ResNet101_Weights.DEFAULT)
@@ -168,4 +173,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    #main()
+    test()

@@ -25,6 +25,9 @@ parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
 parser.add_argument('--test-batch-size', type=int, default=200, metavar='N',
                     help='input batch size for testing (default: 200)')
+parser.add_argument('--model-path',
+                    default='./model-check/model_roi5.pt', #here
+                    help='model for white-box attack evaluation')
 
 args = parser.parse_args()
 
@@ -40,7 +43,8 @@ transform_test = transforms.Compose([
 ])
 
 testset = ImageDataset(
-    folder='/content/croped_framed/croped_framed/1/',
+    folder='/content/croped_framed/croped_framed/5/', #here
+    #folder='/content/croped_framed/2/2/',
     transforms=transform_test
 )
 
@@ -55,6 +59,7 @@ def k_means_(img_features):
     keys_ = Counter(knn_labels).keys()
     val_ = Counter(knn_labels).values()
 
+    print(knn_labels)
     print(keys_)
     print(val_)
 
@@ -85,7 +90,10 @@ def rep(model, device, test_loader):
 
 def main():
     model = resnet101(weights=ResNet101_Weights.DEFAULT)
-    model = model.to(device)
+    #model = resnet101()
+    #model.fc = nn.Linear(2048, 2)
+    #model = model.to(device)
+    #model.load_state_dict(torch.load(args.model_path))
 
     #get backbone of CNN
     backbone = FeatureExtractor(model)
@@ -99,7 +107,7 @@ def main():
 
     image_cluster["knn"] = knn_labels
 
-    image_cluster.to_csv("output1.csv", index=False)
+    image_cluster.to_csv("output5.csv", index=False) #here
 
 if __name__ == '__main__':
     main()
